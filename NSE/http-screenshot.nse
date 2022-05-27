@@ -43,8 +43,8 @@ categories = {"discovery", "safe"}
 
 -- Updated the NSE Script imports and variable declarations
 local shortport = require "shortport"
-
 local stdnse = require "stdnse"
+
 
 -- Check to see if port is tcp, was scanned, is open, and is likely an http service
 portrule = function(host, port)
@@ -69,14 +69,13 @@ action = function(host, port)
 	if (svc.ssl[port.service] or port.version.service_tunnel == 'ssl') then
 	   	prefix = "https"	
 	end
-	
-	-- Check if the use hostname option is set. If so, set target to hostname instead of ip
+
 	local usehostname = stdnse.get_script_args("http-screenshot.usehostname")
-	local target = host.ip
-	
+		local target = host.ip
+			
 	if usehostname then
 		if host.name then
-			target = host.name
+			target = host.targetname
 		end
 	end
 
@@ -88,13 +87,14 @@ action = function(host, port)
 
 	-- quality defaults to index.html
 	local indexpage = stdnse.get_script_args("http-screenshot.indexpage") or "index.html"
-		
+
 	-- Screenshots will be called screenshot-namp-<IP>:<port>.<format>
     local filename = "screenshot-nmap-" .. target .. "_" .. port.number .. "." .. format
 	
 	-- Execute the shell command wkhtmltoimage <url> <filename>
 	stdnse.print_verbose("http-screenshot.nse: Capturing screenshot for %s",prefix .. "://" .. target .. ":" .. port.number)
-	local cmd = "wkhtmltoimage -n --format " .. format .. " --quality " .. quality .. " " .. prefix .. "://" .. target .. ":" .. port.number .. " " .. filename .. " 2> /dev/null   >/dev/null"
+	--local cmd = "wkhtmltoimage -n --format " .. format .. " --quality " .. quality .. " " .. prefix .. "://" .. target .. ":" .. port.number .. " " .. filename .. " 2> /dev/null   >/dev/null"
+	local cmd = "curl -s -L " .. prefix .. "://" .. target .. ":" .. port.number .. "| wkhtmltoimage -n --format " ..format .. " --quality " .. quality .. " - " .. filename
 	
 	local ret = os.execute(cmd)
 
